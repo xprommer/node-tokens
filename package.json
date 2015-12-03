@@ -1,0 +1,24 @@
+{
+  "name": "node-tokens",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "coverage": "NODE_ENV=NODE_TOKENS_TEST istanbul cover ./node_modules/mocha/bin/_mocha -r test/mocha-globals.js --report lcovonly test/test.js -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
+    "test": "NODE_ENV=NODE_TOKENS_TEST mocha -r test/mocha-globals.js test/test.js"
+  },
+  "author": "Nikolaus Piccolotto <nikolaus.piccolotto@zalando.de>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "superagent": "1.4.0",
+    "winston": "2.1.1"
+  },
+  "devDependencies": {
+    "chai": "3.4.1",
+    "coveralls": "2.11.4",
+    "istanbul": "0.4.1",
+    "mocha": "2.3.4",
+    "mocha-lcov-reporter": "1.0.0",
+    "sinon": "1.17.2"
+  }
+}
