@@ -10,7 +10,7 @@ var createTokens = require('../index'),
         oauthTokeninfoUrl: 'https://tokeninfo.url',
         realm: 'realm',
         refreshInterval: 50,
-        expireThreshold: 100
+        expirationThreshold: 100000
     },
     TEST_CLIENT = {
         client_id: 'clientid',
@@ -45,7 +45,7 @@ describe('node-tokens', () => {
         t = createTokens();
         expect(typeof t.get).to.equal('function');
         expect(typeof t.stop).to.equal('function');
-        expect(t.get('test')).to.be.undefined;
+        expect(t.get('test')).to.be.false;
     });
 
     describe('#constructObtainRequest()', () => {
@@ -100,11 +100,29 @@ describe('node-tokens', () => {
 
     describe('#checkTokenValidity()', () => {
         it('should reject when there is no token', done => {
-            t.checkTokenValidity('asf')
+            t = createTokens(TEST_TOKENS, DEFAULT_CONFIG);
+            t.checkTokenValidity('test')
             .catch(() => done());
         });
 
-        it('should resolve when validity is given', done => {
+        it('should reject when token expired locally', done => {
+            t = createTokens(TEST_TOKENS, DEFAULT_CONFIG);
+            t.tokens.test = {
+                local_expiry: 100 // O_O
+            };
+            t.checkTokenValidity('test').catch(() => done());
+        });
+
+        it('should resolve when token is valid', done => {
+            t = createTokens(TEST_TOKENS, DEFAULT_CONFIG);
+            t.tokens.test = {
+                local_expiry: Date.now() + DEFAULT_CONFIG.expirationThreshold + 100
+            };
+
+            t.checkTokenValidity('test').then(() => done());
+        });
+
+        it('should make a http call if token has no local expiry', done => {
             t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
                 constructValidityRequestFn: () => SA_PASS
             }));
@@ -153,23 +171,22 @@ describe('node-tokens', () => {
         it('should actually set the new token!', done => {
             var tokeninfo = {
                     access_token: 'asdf',
-                    expires_in: DEFAULT_CONFIG.expireThreshold - 1
-                },
-                spy = sinon.spy();
+                    expires_in: 3600
+                };
+
             t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
                 checkTokenValidityFn: () => Promise.reject(),
                 obtainTokenFn: () => Promise.resolve(tokeninfo)
             }));
+
             expect(t.tokens.test).to.be.undefined;
             t.updateToken('test').then(() => {
-                expect(t.tokens.test).to.equal('asdf');
+                expect(t.tokens.test.access_token).to.equal('asdf');
                 done();
             });
         })
         it('should not try to obtain new if old is valid', done => {
-            var tokeninfo = {
-                    expires_in: DEFAULT_CONFIG.expireThreshold
-                },
+            var tokeninfo = {},
                 spy = sinon.spy();
             t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
                 checkTokenValidityFn: () => Promise.resolve(tokeninfo),
@@ -183,35 +200,17 @@ describe('node-tokens', () => {
             });
         });
 
-        it('should try to obtain new if old expires soon', done => {
-            var tokeninfo = {
-                    expires_in: DEFAULT_CONFIG.expireThreshold - 1
-                },
-                spy = sinon.spy();
-            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
-                checkTokenValidityFn: () => Promise.resolve(tokeninfo),
-                obtainTokenFn: spy
-            }));
-
-            t.updateToken('test')
-            .then(() => {
-                expect(spy.called).to.be.true;
-                expect(spy.calledWith('test'));
-                done();
-            });
-        });
-
         it('should try to obtain new if old is expired already', done => {
-            var spy = sinon.spy();
+            var stub = sinon.stub();
             t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
                 checkTokenValidityFn: () => Promise.reject(),
-                obtainTokenFn: spy
+                obtainTokenFn: stub
             }));
-
+            stub.returns(Promise.resolve({}));
             t.updateToken('test')
             .then(() => {
-                expect(spy.called).to.be.true;
-                expect(spy.calledWith('test'));
+                expect(stub.called).to.be.true;
+                expect(stub.calledWith('test'));
                 done();
             });
         });
