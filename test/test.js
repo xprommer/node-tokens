@@ -2,7 +2,7 @@ var createTokens = require('../index'),
     basic = x => (new Buffer(x).toString('base64')),
     TEST_TOKENS = {
                     test: {
-                        scope: ['write']
+                        scope: ['write', 'read']
                     }
                 },
     DEFAULT_CONFIG = {
@@ -73,6 +73,7 @@ describe('node-tokens', () => {
             expect(req._data.grant_type).to.equal('password');
             expect(req._data.username).to.equal(TEST_USER.application_username);
             expect(req._data.password).to.equal(TEST_USER.application_password);
+            expect(req._data.scope).to.equal('write read');
         });
     });
 
