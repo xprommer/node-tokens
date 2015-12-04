@@ -98,7 +98,9 @@ module.exports = function NodeTokens(tokenConfig, config) {
                     grant_type: 'password',
                     username: user.application_username,
                     password: user.application_password,
-                    scope: tokenConfig[tokenName].scope || []
+                    scope: tokenConfig[tokenName].scope ?
+                            tokenConfig[tokenName].scope.join(' ') :
+                            ''
                 });
     }
 

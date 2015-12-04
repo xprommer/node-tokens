@@ -1,3 +1,5 @@
 coverage
 npm-debug.log
 node_modules
+creds
+local.js
