@@ -182,6 +182,7 @@ describe('node-tokens', () => {
             expect(t.tokens.test).to.be.undefined;
             t.updateToken('test').then(() => {
                 expect(t.tokens.test.access_token).to.equal('asdf');
+                expect(t.get('test')).to.equal('asdf');
                 done();
             });
         })
