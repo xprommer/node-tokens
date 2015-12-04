@@ -1,5 +1,8 @@
 # node-tokens
 
+[![Build Status](https://travis-ci.org/zalando-stups/node-tokens.svg?branch=master)](https://travis-ci.org/zalando-stups/node-tokens) [![Coverage Status](https://coveralls.io/repos/zalando-stups/node-tokens/badge.svg?branch=master&service=github)](https://coveralls.io/github/zalando-stups/node-tokens?branch=master)
+
+
 ## Usage
 
 ~~~
