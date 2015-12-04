@@ -77,10 +77,17 @@ module.exports = function NodeTokens(tokenConfig, config) {
                     winston.error('Could not obtain token', tokenName, err);
                     return reject(err);
                 }
-                winston.info('Obtained new token', tokenName);
                 resolve(response.body);
             });
         });
+    }
+
+    function setToken(tokenName, tokenResponse) {
+        if (tokenResponse) {
+            TOKENS[tokenName] = tokenResponse.access_token;
+            winston.info('Obtained new token', tokenName);
+        }
+        return tokenResponse;
     }
 
     function updateToken(tokenName) {
@@ -95,7 +102,8 @@ module.exports = function NodeTokens(tokenConfig, config) {
                         // will be catched further down
                     }
                 })
-                .catch(() => obtainTokenFn(tokenName));
+                .catch(() => obtainTokenFn(tokenName))
+                .then(response => setToken(tokenName, response));
     }
 
     function stop() {
@@ -114,6 +122,7 @@ module.exports = function NodeTokens(tokenConfig, config) {
         .map(config.updateTokenFn || updateToken)
         .reduce((prev, cur) => prev.then(cur), Promise.resolve())
         .then(() => {
+            console.log()
             // ensure we land in catch()
             throw new Error();
         })

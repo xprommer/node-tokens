@@ -150,6 +150,22 @@ describe('node-tokens', () => {
     });
 
     describe('#updateToken()', () => {
+        it('should actually set the new token!', done => {
+            var tokeninfo = {
+                    access_token: 'asdf',
+                    expires_in: DEFAULT_CONFIG.expireThreshold - 1
+                },
+                spy = sinon.spy();
+            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
+                checkTokenValidityFn: () => Promise.reject(),
+                obtainTokenFn: () => Promise.resolve(tokeninfo)
+            }));
+            expect(t.tokens.test).to.be.undefined;
+            t.updateToken('test').then(() => {
+                expect(t.tokens.test).to.equal('asdf');
+                done();
+            });
+        })
         it('should not try to obtain new if old is valid', done => {
             var tokeninfo = {
                     expires_in: DEFAULT_CONFIG.expireThreshold
