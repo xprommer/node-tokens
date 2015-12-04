@@ -9,8 +9,8 @@ module.exports = function NodeTokens(tokenConfig, config) {
         STOP = false,
         TOKENS = {},
         EXPIRES = {},
-        EXPIRE_THRESHOLD = config.expirationThreshold || 60000,
-        REFRESH_INTERVAL = config.refreshInterval || 10000,
+        EXPIRE_THRESHOLD = config.expirationThreshold || parseInt(process.env.TOKENS_EXPIRATION_THRESHOLD, 10) || 60000,
+        REFRESH_INTERVAL = config.refreshInterval || parseInt(process.env.TOKENS_REFRESH_INTERVAL, 10) || 10000,
         REALM = config.realm || process.env.TOKENS_REALM || '/services',
         CREDENTIALS_DIR = config.credentialsDir || process.env.CREDENTIALS_DIR,
         OAUTH_TOKENINFO_URL = config.oauthTokeninfoUrl || process.env.OAUTH_TOKENINFO_URL,
@@ -196,7 +196,8 @@ module.exports = function NodeTokens(tokenConfig, config) {
             checkTokenValidity,
             obtainToken,
             stop,
-            scheduleUpdates
+            scheduleUpdates,
+            get: x => TOKENS[x] ? TOKENS[x].access_token : false
         }
     }
 
