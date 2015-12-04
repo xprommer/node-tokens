@@ -37,7 +37,7 @@ describe('node-tokens', () => {
 
     it('should expose all functions in test', () => {
         t = createTokens();
-        expect(Object.keys(t).length).to.equal(9);
+        expect(Object.keys(t).length).to.equal(10);
     });
 
     it('should expose an object by default', () => {
