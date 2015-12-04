@@ -19,27 +19,25 @@ var createTokens = require('../index'),
     TEST_USER = {
         application_username: 'user',
         application_password: 'password'
+    },
+    SA_PASS = {
+        end: cb => cb(null, {})
+    },
+    SA_FAIL = {
+        end: cb => cb(new Error('Superagent failure'), null)
     };
 
 describe('node-tokens', () => {
-    afterEach(() => {
-        process.env.NODE_ENV = 'NODE_TOKENS_TEST';
-    });
-
     var t;
 
     afterEach(() => {
+        process.env.NODE_ENV = 'NODE_TOKENS_TEST';
         t.stop();
     });
 
-    it('should expose a whole object in test', () => {
+    it('should expose all functions in test', () => {
         t = createTokens();
-        expect(Object.keys(t).length > 0).to.be.true;
-    });
-
-    it('should create as many intervals as there are tokens', () => {
-        t = createTokens(TEST_TOKENS);
-        expect(Object.keys(t.intervals).length).to.equal(1);
+        expect(Object.keys(t).length).to.equal(9);
     });
 
     it('should expose an object by default', () => {
@@ -107,81 +105,110 @@ describe('node-tokens', () => {
         });
 
         it('should resolve when validity is given', done => {
-            t.checkTokenValidity('test', () => ({
-                end: cb => cb(null, {})
-            }))
+            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
+                constructValidityRequestFn: () => SA_PASS
+            }));
+            t.tokens.test = 'asdf';
+
+            t
+            .checkTokenValidity('test')
             .then(done);
         });
 
         it('should reject when validity failed', done => {
-            t.checkTokenValidity('test', () => ({
-                end: cb => cb(true, null)
-            }))
+            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
+                constructValidityRequestFn: () => SA_FAIL
+            }));
+            t.tokens.test = 'asdf';
+
+            t
+            .checkTokenValidity('test')
             .catch(() => done());
         });
     });
 
     describe('#obtainToken()', () => {
         it('should resolve if token was obtained', done => {
-            t.obtainToken('test', () => ({
-                end: cb => cb(null, {})
-            }))
+            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
+                constructObtainRequestFn: () => SA_PASS
+            }));
+
+            t
+            .obtainToken('test')
             .then(done);
         });
 
         it('should reject if token could not be obtained', done => {
-            t.obtainToken('test', () => ({
-                end: cb => cb(true, null)
-            }))
+            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
+                constructObtainRequestFn: () => SA_FAIL
+            }));
+
+            t
+            .obtainToken('test')
             .catch(() => done());
         });
     });
 
     describe('#updateToken()', () => {
-        beforeEach(() => {
-            t = createTokens(TEST_TOKENS, DEFAULT_CONFIG);
-        });
-
         it('should not try to obtain new if old is valid', done => {
             var tokeninfo = {
-                expires_in: DEFAULT_CONFIG.expireThreshold
-            };
-            t.updateToken(
-                'test',
-                () => Promise.resolve(tokeninfo))
-            .then(done);
+                    expires_in: DEFAULT_CONFIG.expireThreshold
+                },
+                spy = sinon.spy();
+            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
+                checkTokenValidityFn: () => Promise.resolve(tokeninfo),
+                obtainTokenFn: spy
+            }));
+
+            t.updateToken('test')
+            .then(() => {
+                expect(spy.called).to.be.false;
+                done();
+            });
         });
 
         it('should try to obtain new if old expires soon', done => {
             var tokeninfo = {
-                expires_in: DEFAULT_CONFIG.expireThreshold - 1
-            };
-            t.updateToken(
-                'test',
-                () => Promise.resolve(tokeninfo),
-                function(name) {
-                    expect(name).to.equal('test');
-                    done();
-                });
+                    expires_in: DEFAULT_CONFIG.expireThreshold - 1
+                },
+                spy = sinon.spy();
+            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
+                checkTokenValidityFn: () => Promise.resolve(tokeninfo),
+                obtainTokenFn: spy
+            }));
+
+            t.updateToken('test')
+            .then(() => {
+                expect(spy.called).to.be.true;
+                expect(spy.calledWith('test'));
+                done();
+            });
         });
 
-        it('should try to obtain new if old is expired', done => {
-            t.updateToken(
-                'test',
-                () => Promise.reject(),
-                function(name) {
-                    expect(name).to.equal('test');
-                    done();
-                });
+        it('should try to obtain new if old is expired already', done => {
+            var spy = sinon.spy();
+            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
+                checkTokenValidityFn: () => Promise.reject(),
+                obtainTokenFn: spy
+            }));
+
+            t.updateToken('test')
+            .then(() => {
+                expect(spy.called).to.be.true;
+                expect(spy.calledWith('test'));
+                done();
+            });
         });
 
         it('should try to update a token every configured interval', done => {
-            var spy = sinon.spy();
+            var stub = sinon.stub();
+            stub.returns(Promise.resolve());
             t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
-                updateTokenFn: spy
+                updateTokenFn: stub
             }));
+            t.scheduleUpdates();
             setTimeout(() => {
-                expect(spy.callCount).to.equal(2);
+                expect(stub.callCount).to.equal(2);
                 done();
             }, DEFAULT_CONFIG.refreshInterval + 10);
         });

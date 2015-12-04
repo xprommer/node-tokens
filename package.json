@@ -3,7 +3,11 @@
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
+  "watch": {
+    "test": "test/test.js"
+  },
   "scripts": {
+    "watch": "npm-watch",
     "coverage": "NODE_ENV=NODE_TOKENS_TEST istanbul cover ./node_modules/mocha/bin/_mocha -r test/mocha-globals.js --report lcovonly test/test.js -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
     "test": "NODE_ENV=NODE_TOKENS_TEST mocha -r test/mocha-globals.js test/test.js"
   },
@@ -19,6 +23,7 @@
     "istanbul": "0.4.1",
     "mocha": "2.3.4",
     "mocha-lcov-reporter": "1.0.0",
+    "npm-watch": "0.0.1",
     "sinon": "1.17.2"
   }
 }

@@ -6,6 +6,7 @@ var superagent = require('superagent'),
 module.exports = function NodeTokens(tokenConfig, config) {
     var tokenConfig = tokenConfig || {},
         config = config || {},
+        STOP = false,
         TOKENS = {},
         EXPIRES = {},
         EXPIRE_THRESHOLD = config.expireThreshold || 60,
@@ -27,12 +28,13 @@ module.exports = function NodeTokens(tokenConfig, config) {
                 });
     }
 
-    function checkTokenValidity(tokenName, constructValidityRequestParam) {
+    function checkTokenValidity(tokenName) {
         if (!TOKENS[tokenName]) {
-            winston.debug('Token', tokenName, 'does not exist.');
-            return Promise.reject();
+            var msg = `Token ${tokenName} does not exist.`;
+            winston.debug(msg);
+            return Promise.reject(new Error(msg));
         }
-        var constructValidityRequestFn = constructValidityRequestParam || constructValidityRequest;
+        var constructValidityRequestFn = config.constructValidityRequestFn || constructValidityRequest;
         return new Promise((resolve, reject) => {
             constructValidityRequestFn(tokenName)
             .end((err, response) => {
@@ -65,9 +67,9 @@ module.exports = function NodeTokens(tokenConfig, config) {
                 });
     }
 
-    function obtainToken(tokenName, constructObtainRequestParam) {
+    function obtainToken(tokenName) {
         return new Promise((resolve, reject) => {
-            var constructObtainRequestFn = constructObtainRequestParam || constructObtainRequest;
+            var constructObtainRequestFn = config.constructObtainRequestFn || constructObtainRequest;
 
             constructObtainRequestFn(tokenName)
             .end((err, response) => {
@@ -81,10 +83,10 @@ module.exports = function NodeTokens(tokenConfig, config) {
         });
     }
 
-    function updateToken(tokenName, checkTokenValidityParam, obtainTokenParam) {
+    function updateToken(tokenName) {
         // whyyy are there no default parameters yet
-        var checkTokenValidityFn = checkTokenValidityParam || checkTokenValidity,
-            obtainTokenFn = obtainTokenParam || obtainToken;
+        var checkTokenValidityFn = config.checkTokenValidityFn || checkTokenValidity,
+            obtainTokenFn = config.obtainTokenFn || obtainToken;
 
         return checkTokenValidityFn(tokenName)
                 .then(function(tokeninfo) {
@@ -93,31 +95,33 @@ module.exports = function NodeTokens(tokenConfig, config) {
                         // will be catched further down
                     }
                 })
-                .catch(function() {
-                    obtainTokenFn(tokenName);
-                });
+                .catch(() => obtainTokenFn(tokenName));
     }
 
-    var intervals = Object
-                    .keys(tokenConfig)
-                    .reduce(function(ints, name) {
-                        // reduce with side effects!
-                        obtainToken(name);
-
-                        ints[name] = setInterval(() => (config.updateTokenFn || updateToken)(name), REFRESH_INTERVAL);
-                        return ints;
-                    },
-                    {});
-
     function stop() {
+        if (!STOP) {
+            STOP = true;
+        }
+    }
+
+    function scheduleUpdates() {
+        if (STOP) {
+            return;
+        }
+
         Object
-        .keys(intervals)
-        .forEach(inter => clearInterval(intervals[inter]));
+        .keys(tokenConfig)
+        .map(config.updateTokenFn || updateToken)
+        .reduce((prev, cur) => prev.then(cur), Promise.resolve())
+        .then(() => {
+            // ensure we land in catch()
+            throw new Error();
+        })
+        .catch(err => setTimeout(scheduleUpdates, REFRESH_INTERVAL));
     }
 
     if (process.env.NODE_ENV === 'NODE_TOKENS_TEST') {
         return {
-            intervals,
             readJSON,
             updateToken,
             tokens: TOKENS,
@@ -125,10 +129,12 @@ module.exports = function NodeTokens(tokenConfig, config) {
             constructValidityRequest,
             checkTokenValidity,
             obtainToken,
-            stop
+            stop,
+            scheduleUpdates
         }
     }
 
+    scheduleUpdates();
     // return getter function to avoid
     // overwriting a token by accident
     return {
