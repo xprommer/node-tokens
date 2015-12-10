@@ -28,12 +28,27 @@ var createTokens = require('../src/default'),
     };
 
 describe('node-tokens in default mode', () => {
-    var t;
+    var t,
+        req;
 
     afterEach(() => {
         process.env.NODE_ENV = 'NODE_TOKENS_TEST';
         if (t.stop && typeof t.stop === 'function') {
             t.stop();
+        }
+        if (req) {
+            try {
+                req.end();
+            } catch(err) {
+                // do nothing
+                // apparently creating requests and not `end`ing them
+                // does not actually work on node.js. they will be sent
+                // automatically in the next tick, if not already done.
+                //
+                // https://github.com/visionmedia/superagent/issues/714
+                // ;_;
+            }
+            req = undefined;
         }
     });
 
@@ -56,7 +71,7 @@ describe('node-tokens in default mode', () => {
                     realm: 'realm',
                     oauthTokenUrl: 'https://tokenurl.info'
                 });
-            var req = t.constructObtainRequest('test', TEST_CLIENT, TEST_USER);
+            req = t.constructObtainRequest('test', TEST_CLIENT, TEST_USER);
 
             // method and host
             expect(req.method).to.equal('POST');
@@ -87,7 +102,7 @@ describe('node-tokens in default mode', () => {
 
             t.tokens.test = 'abcd';
 
-            var req = t.constructValidityRequest('test');
+            req = t.constructValidityRequest('test');
             expect(req.method).to.equal('GET');
             expect(req.url).to.equal('https://tokeninfo.url');
             expect(req.qs.access_token).to.equal('abcd');
