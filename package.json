@@ -8,7 +8,7 @@
   },
   "scripts": {
     "coverage": "NODE_ENV=NODE_TOKENS_TEST istanbul cover ./node_modules/mocha/bin/_mocha -r test/mocha-globals.js --report lcovonly test/test.js -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
-    "test": "NODE_ENV=NODE_TOKENS_TEST mocha -r test/mocha-globals.js test/test.js",
+    "test": "NODE_ENV=NODE_TOKENS_TEST mocha -r test/mocha-globals.js test/*.test.js",
     "build": "echo 'Nothing to build here' && exit 0"
   },
   "author": "Nikolaus Piccolotto <nikolaus.piccolotto@zalando.de>",

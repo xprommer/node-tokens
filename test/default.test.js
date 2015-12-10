@@ -1,4 +1,4 @@
-var createTokens = require('../index'),
+var createTokens = require('../src/default'),
     basic = x => (new Buffer(x).toString('base64')),
     TEST_TOKENS = {
                     test: {
@@ -27,7 +27,7 @@ var createTokens = require('../index'),
         end: cb => cb(new Error('Superagent failure'), null)
     };
 
-describe('node-tokens', () => {
+describe('node-tokens in default mode', () => {
     var t;
 
     afterEach(() => {
@@ -37,7 +37,7 @@ describe('node-tokens', () => {
 
     it('should expose all functions in test', () => {
         t = createTokens();
-        expect(Object.keys(t).length).to.equal(10);
+        expect(Object.keys(t).length).to.equal(11);
     });
 
     it('should expose an object by default', () => {
