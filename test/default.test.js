@@ -32,7 +32,9 @@ describe('node-tokens in default mode', () => {
 
     afterEach(() => {
         process.env.NODE_ENV = 'NODE_TOKENS_TEST';
-        t.stop();
+        if (t.stop && typeof t.stop === 'function') {
+            t.stop();
+        }
     });
 
     it('should expose all functions in test', () => {
