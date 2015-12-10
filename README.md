@@ -43,6 +43,14 @@ You can set the following environment variables to configure the corresponding o
 * `OAUTH_TOKENINFO_URL`
 * `OAUTH_TOKEN_URL`
 
+## Local testing
+
+You can set access tokens you want to use via the `OAUTH_ACCESS_TOKENS` environment variable.
+
+    OAUTH_ACCESS_TOKENS="token1:abcdef,token2:cdeafd" node your-app-using-node-tokens.js
+
+`node-tokens` will then not try to call OAuth endpoints e.g. to update a token.
+
 ## License
 
 Apache 2.0
