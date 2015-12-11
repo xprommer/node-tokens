@@ -96,7 +96,7 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
                 .query({
                     realm: REALM
                 })
-                .auth(client.client_id, client.client_secret)
+                .auth(client.client_id, client.client_secret || '')
                 .type('form')
                 .send({
                     grant_type: 'password',
