@@ -5,7 +5,7 @@
 
 ## Usage
 
-~~~
+~~~ javascript
 var manageTokens = require('node-tokens');
 
 // note: oauth endpoint configuration omitted
