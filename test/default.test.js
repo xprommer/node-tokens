@@ -246,5 +246,21 @@ describe('node-tokens in default mode', () => {
                 done();
             }, DEFAULT_CONFIG.refreshInterval + 10);
         });
+
+        it('should stop updating tokens after stop() was called', done => {
+            var stub = sinon.stub();
+            stub.returns(Promise.resolve());
+            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
+                updateTokenFn: stub
+            }));
+            t.scheduleUpdates();
+            // one update is done immediately
+            // now stop
+            t.stop();
+            setTimeout(() => {
+                expect(stub.callCount).to.equal(1);
+                done();
+            }, DEFAULT_CONFIG.refreshInterval * 10);
+        });
     });
 });
