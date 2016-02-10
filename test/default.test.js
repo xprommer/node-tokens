@@ -279,6 +279,24 @@ describe('node-tokens in default mode', () => {
             }, 1000);
         });
 
+        it('should reset the backoff again', done => {
+            var stub = sinon.stub();
+            stub.returns(Promise.reject());
+            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
+                updateTokenFn: stub
+            }));
+            t.scheduleUpdates();
+            setTimeout(() => {
+                stub.returns(Promise.resolve());
+            }, 400);
+            setTimeout(() => {
+                t.stop();
+                expect(stub.callCount).to.equal(9);
+                done();
+            }, 1000);
+        });
+
+
         it('should cap the backoff at configured maximum', done => {
             var stub = sinon.stub();
             stub.returns(Promise.reject());
@@ -291,9 +309,9 @@ describe('node-tokens in default mode', () => {
                 t.stop();
                 // default backoff factor is 2
                 // should work like so: 100, 200, 400, 400
-                expect(stub.callCount).to.equal(4);
+                expect(stub.callCount).to.equal(5);
                 done();
-            }, 1000);
+            }, 1500);
         });
     });
 });
