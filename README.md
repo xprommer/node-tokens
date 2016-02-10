@@ -31,6 +31,8 @@ tokens.get('kio');
 
 * `expirationThreshold`: Say you want to get a new token 2 minutes before the token actually expires. Then you would set this to `120000`. Defaults to 60 seconds.
 * `refreshInterval`: How often you want your tokens to be checked for validity, in ms. Defaults to 10 seconds.
+* `backoffFactor`: Factor to multiply the refresh interval when backing off. Defaults to 2, so it would go 100, 200, 400… for a configured interval of 100 ms.
+* `maxRefreshInterval`: The maximum interval when backing off. Defaults to 5 minutes.
 * `realm`: Realm you want your token to be valid for. Defaults to "/services".
 * `credentialsDir`: Where to get client and user credentials, usually already set by Taupage. No default.
 * `oauthTokeninfoUrl`: Where to get information about a token. No default!
@@ -40,6 +42,8 @@ tokens.get('kio');
 
 You can set the following environment variables to configure the corresponding option:
 
+* `TOKENS_BACKOFF_FACTOR`
+* `TOKENS_MAX_REFRESH_INTERVAL`
 * `TOKENS_EXPIRATION_THRESHOLD`
 * `TOKENS_REFRESH_INTERVAL`
 * `CREDENTIALS_DIR`
