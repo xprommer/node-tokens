@@ -1,4 +1,7 @@
 var createTokens = require('../src/default'),
+    fs = require('fs'),
+    path = require('path'),
+    VERSION = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'))).version,
     basic = x => (new Buffer(x).toString('base64')),
     TEST_TOKENS = {
                     test: {
@@ -79,6 +82,7 @@ describe('node-tokens in default mode', () => {
             expect(req.host).to.equal('tokenurl.info');
 
             // headers
+            expect(req.req._headers['user-agent']).to.equal('node-tokens (' + VERSION + ')');
             expect(req.req._headers['content-type']).to.equal('application/x-www-form-urlencoded');
             expect(req.req._headers.authorization).to.equal('Basic ' + basic(`${TEST_CLIENT.client_id}:${TEST_CLIENT.client_secret}`));
 
@@ -103,6 +107,7 @@ describe('node-tokens in default mode', () => {
             t.tokens.test = 'abcd';
 
             req = t.constructValidityRequest('test');
+            expect(req.req._headers['user-agent']).to.equal('node-tokens (' + VERSION + ')');
             expect(req.method).to.equal('GET');
             expect(req.url).to.equal('https://tokeninfo.url');
             expect(req.qs.access_token).to.equal('abcd');

@@ -1,8 +1,10 @@
 var superagent = require('superagent'),
     winston = require('winston'),
     PACKAGE_NAME = '[node-tokens]',
-    path = require('path'),
-    fs = require('fs');
+    fs = require('fs'),
+    path = require('path')
+    VERSION = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'))).version,
+    UA_STRING = 'node-tokens (' + VERSION + ')';
 
 module.exports = function DefaultNodeTokens(tokenConfig, config) {
     winston.info(PACKAGE_NAME, 'Running in default mode.');
@@ -33,6 +35,7 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
     function constructValidityRequest(tokenName) {
         return superagent
                 .get(OAUTH_TOKENINFO_URL)
+                .set('User-Agent', UA_STRING)
                 .query({
                     access_token: TOKENS[tokenName]
                 });
@@ -93,6 +96,7 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
 
         return superagent
                 .post(OAUTH_TOKEN_URL)
+                .set('User-Agent', UA_STRING)
                 .query({
                     realm: REALM
                 })
