@@ -61,11 +61,11 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
                 constructValidityRequestFn(tokenName)
                 .end((err, response) => {
                     if (err) {
-                        winston.debug(PACKAGE_NAME, 'Token', tokenName, 'is invalid.');
+                        winston.debug('%s Token "%s" is invalid.', PACKAGE_NAME, tokenName);
                         return reject(err);
                     }
                     //TODO edge case where token is still valid but like two seconds.
-                    winston.debug(PACKAGE_NAME, 'Token', tokenName, 'is still valid.');
+                    winston.debug('%s Token "%s" is still valid for %s seconds.', PACKAGE_NAME, tokenName, response.body.expires_in);
                     resolve(response.body);
                 });
             });
@@ -73,7 +73,7 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
 
         if (tokeninfo.local_expiry < Date.now()) {
             var msg = `Token ${tokenName} expired locally.`;
-            winston.debug(PACKAGE_NAME, msg);
+            winston.debug('%s %s', PACKAGE_NAME, msg);
             return Promise.reject(new Error(msg));
         }
         return Promise.resolve(tokeninfo);
@@ -121,7 +121,7 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
             constructObtainRequestFn(tokenName)
             .end((err, response) => {
                 if (err) {
-                    winston.error('Could not obtain token', tokenName, err);
+                    winston.error('%s Could not obtain token "%s": %d %s', PACKAGE_NAME, tokenName, err.status, err.message);
                     return reject(err);
                 }
                 resolve(response.body);
@@ -140,7 +140,7 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
         if (tokenResponse && !tokenResponse.local_expiry) {
             TOKENS[tokenName] = tokenResponse;
             TOKENS[tokenName].local_expiry = Date.now() + tokenResponse.expires_in * 1000 - EXPIRE_THRESHOLD;
-            winston.info(PACKAGE_NAME, 'Obtained new token', tokenName);
+            winston.info('%s Obtained new token "%s".', PACKAGE_NAME, tokenName);
         }
         // else just return what we have already
         return TOKENS[tokenName];
