@@ -121,7 +121,7 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
             constructObtainRequestFn(tokenName)
             .end((err, response) => {
                 if (err) {
-                    winston.error('%s Could not obtain token "%s": %d %s. Metadata: %j', PACKAGE_NAME, tokenName, err.status, err.message, err.response.body);
+                    winston.error('%s Could not obtain token "%s": %d %s. Response body: %j', PACKAGE_NAME, tokenName, err.status, err.message, (err.response && err.response.body));
                     return reject(err);
                 }
                 resolve(response.body);
