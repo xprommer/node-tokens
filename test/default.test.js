@@ -262,5 +262,38 @@ describe('node-tokens in default mode', () => {
                 done();
             }, DEFAULT_CONFIG.refreshInterval * 10);
         });
+
+        it('should backoff if token cannot be obtained', done => {
+            var stub = sinon.stub();
+            stub.returns(Promise.reject());
+            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
+                updateTokenFn: stub
+            }));
+            t.scheduleUpdates();
+            setTimeout(() => {
+                t.stop();
+                // default backoff factor is 2
+                // should work like so: 0, 100, 200, 400, 800
+                expect(stub.callCount).to.equal(4);
+                done();
+            }, 1000);
+        });
+
+        it('should cap the backoff at configured maximum', done => {
+            var stub = sinon.stub();
+            stub.returns(Promise.reject());
+            t = createTokens(TEST_TOKENS, Object.assign(DEFAULT_CONFIG, {
+                updateTokenFn: stub,
+                maxRefreshInterval: 400
+            }));
+            t.scheduleUpdates();
+            setTimeout(() => {
+                t.stop();
+                // default backoff factor is 2
+                // should work like so: 100, 200, 400, 400
+                expect(stub.callCount).to.equal(4);
+                done();
+            }, 1000);
+        });
     });
 });

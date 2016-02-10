@@ -13,12 +13,15 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
         TOKENS = {},
         EXPIRES = {},
         IN_TEST = process.env.NODE_ENV === 'NODE_TOKENS_TEST',
+        BACKOFF_FACTOR = config.backoffFactor || parseInt(process.env.TOKENS_BACKOFF_FACTOR) || 2,
         EXPIRE_THRESHOLD = config.expirationThreshold || parseInt(process.env.TOKENS_EXPIRATION_THRESHOLD, 10) || 60000,
         REFRESH_INTERVAL = config.refreshInterval || parseInt(process.env.TOKENS_REFRESH_INTERVAL, 10) || 10000,
+        MAX_REFRESH_INTERVAL = config.maxRefreshInterval || parseInt(process.env.TOKENS_MAX_REFRESH_INTERVAL, 10) || 300000,
         REALM = config.realm || process.env.TOKENS_REALM || '/services',
         CREDENTIALS_DIR = config.credentialsDir || process.env.CREDENTIALS_DIR,
         OAUTH_TOKENINFO_URL = config.oauthTokeninfoUrl || process.env.OAUTH_TOKENINFO_URL,
-        OAUTH_TOKEN_URL = config.oauthTokenUrl || process.env.OAUTH_TOKEN_URL;
+        OAUTH_TOKEN_URL = config.oauthTokenUrl || process.env.OAUTH_TOKEN_URL,
+        refreshInterval = REFRESH_INTERVAL;
 
     function readJSON(dir, file) {
         return JSON.parse(String(fs.readFileSync(path.join(dir, file))));
@@ -180,15 +183,20 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
             return;
         }
 
-        Object
-        .keys(tokenConfig)
-        .map(config.updateTokenFn || updateToken)
-        .reduce((prev, cur) => prev.then(cur), Promise.resolve())
-        .then(() => {
-            // ensure we land in catch()
-            throw new Error();
+        var updatePromises = Object.keys(tokenConfig).map(config.updateTokenFn || updateToken);
+        Promise
+        .all(updatePromises)
+        .then((res) => {
+            winston.debug('%s All updates were good, resetting refresh interval.', PACKAGE_NAME);
+            refreshInterval = REFRESH_INTERVAL;
+            setTimeout(scheduleUpdates, refreshInterval);
         })
-        .catch(err => setTimeout(scheduleUpdates, REFRESH_INTERVAL));
+        .catch(err => {
+            // backoff exponentially by configured factor but cap at MAX_REFRESH_INTERVAL
+            refreshInterval = Math.min(MAX_REFRESH_INTERVAL, refreshInterval * BACKOFF_FACTOR);
+            winston.error('%s Could not update all tokens, backing off. Retry in %d ms.', PACKAGE_NAME, refreshInterval);
+            setTimeout(scheduleUpdates, refreshInterval);
+        });
     }
 
     // if we are testing, expose a whole lot of stuff
