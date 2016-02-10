@@ -5,7 +5,7 @@ var superagent = require('superagent'),
     fs = require('fs');
 
 module.exports = function DefaultNodeTokens(tokenConfig, config) {
-    winston.info(PACKAGE_NAME, 'Running in default mode.');
+    winston.info('%s Running in default mode.', PACKAGE_NAME);
 
     var tokenConfig = tokenConfig || {},
         config = config || {},
@@ -49,7 +49,7 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
     function checkTokenValidity(tokenName) {
         if (!TOKENS[tokenName]) {
             var msg = `Token ${tokenName} does not exist.`;
-            winston.debug(PACKAGE_NAME, msg);
+            winston.debug('%s %s', PACKAGE_NAME, msg);
             return Promise.reject(new Error(msg));
         }
         var tokeninfo = TOKENS[tokenName];
