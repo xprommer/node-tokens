@@ -187,8 +187,10 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
         Promise
         .all(updatePromises)
         .then((res) => {
-            winston.debug('%s All updates were good, resetting refresh interval.', PACKAGE_NAME);
-            refreshInterval = REFRESH_INTERVAL;
+            if (refreshInterval > REFRESH_INTERVAL) {
+                winston.debug('%s All updates were good, resetting refresh interval.', PACKAGE_NAME);
+                refreshInterval = REFRESH_INTERVAL;
+            }
             setTimeout(scheduleUpdates, refreshInterval);
         })
         .catch(err => {
