@@ -2,7 +2,7 @@ var winston = require('winston'),
     PACKAGE_NAME = '[node-tokens]';
 
 module.exports = function LocalNodeTokens() {
-    winston.info(PACKAGE_NAME, 'Running in local mode.');
+    winston.info('%s Running in local mode.', PACKAGE_NAME);
 
     var tokenString = process.env.OAUTH_ACCESS_TOKENS;
         tokens = tokenString
