@@ -21,7 +21,11 @@ var createTokens = require('../src/default'),
         application_password: 'password'
     },
     SA_PASS = {
-        end: cb => cb(null, {})
+        end: cb => cb(null, {
+            body: {
+                expires_in: 1000
+            }
+        })
     },
     SA_FAIL = {
         end: cb => cb(new Error('Superagent failure'), null)
@@ -148,7 +152,7 @@ describe('node-tokens in default mode', () => {
 
             t
             .checkTokenValidity('test')
-            .then(done);
+            .then(() => done());
         });
 
         it('should reject when validity failed', done => {
@@ -171,7 +175,7 @@ describe('node-tokens in default mode', () => {
 
             t
             .obtainToken('test')
-            .then(done);
+            .then(() => done());
         });
 
         it('should reject if token could not be obtained', done => {
