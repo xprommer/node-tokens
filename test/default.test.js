@@ -66,6 +66,18 @@ describe('node-tokens in default mode', () => {
     });
 
     describe('#constructObtainRequest()', () => {
+        it('should fill client_secret in auth header', () => {
+            t = createTokens(TEST_TOKENS, {
+                    realm: 'realm',
+                    oauthTokenUrl: 'https://tokenurl.info'
+                });
+            req = t.constructObtainRequest('test', {
+                client_id: TEST_CLIENT.client_id,
+                client_secret: null
+            }, TEST_USER);
+
+            expect(req.req._headers.authorization).to.equal('Basic ' + basic(`${TEST_CLIENT.client_id}:NOT_A_SECRET`));
+        });
         it('should construct with correct parameters', () => {
             t = createTokens(TEST_TOKENS, {
                     realm: 'realm',
