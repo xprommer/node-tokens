@@ -120,7 +120,10 @@ describe('node-tokens in default mode', () => {
                 oauthTokeninfoUrl: 'https://tokeninfo.url'
             });
 
-            t.tokens.test = 'abcd';
+            //t.tokens.test = 'abcd';
+            t.tokens.test = {
+                access_token: 'abcd'
+            };
 
             req = t.constructValidityRequest('test');
             expect(req.req._headers['user-agent']).to.equal('node-tokens (' + VERSION + ')');

@@ -40,7 +40,7 @@ module.exports = function DefaultNodeTokens(tokenConfig, config) {
                 .get(OAUTH_TOKENINFO_URL)
                 .set('User-Agent', UA_STRING)
                 .query({
-                    access_token: TOKENS[tokenName]
+                    access_token: (TOKENS[tokenName] || {}).access_token
                 });
     }
 
